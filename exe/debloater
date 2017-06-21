@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'debloater/cli'
+
+Debloater::CLI.new(ARGV).run

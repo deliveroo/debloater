@@ -1,28 +1,63 @@
-# Debloater
+# debloater
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/debloater`. To experiment with that code, run `bin/console` for an interactive prompt.
+Safely rebuilds PostgreSQL indices on a live database.
 
-TODO: Delete this and the text above, and describe your gem
 
 ## Installation
 
-Add this line to your application's Gemfile:
+With a recent version of Ruby installed, run:
 
-```ruby
-gem 'debloater'
-```
+    gem install debloater
 
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install debloater
 
 ## Usage
 
-TODO: Write usage instructions here
+If you run `debloater` without arguments, you should read:
+
+```
+Usage: debloater [options] database
+    -h HOST                          Database host to connect to [localhost]
+    -p PORT                          Port to connect to [5432]
+    -U USER                          Username to connect with [postgres]
+    -W                               Prompt for password (default)
+    -w                               No prompt for password
+        --auto                       Do not ask for confirmation before debloating
+        --min-mb [SIZE]              Do not debloat if the bloat size is lower than SIZE megabytes [50]
+        --max-density [FRACTION]     Do not debloat if the index density is higher than FRACTION [0.75]
+        --help                       Prints this help
+```
+
+### Caveats
+
+The `pgstattuple` extension is required; install it if asked with:
+
+```sql
+CREATE EXTENSION pgstattuple;
+```
+
+Within this extension, permission to run `pgstatindex()` is required; this may
+be problematic on some platforms, e.g. Amazon RDS. `debloater` will fall back to
+a function called `get_pgstatindex()` with the same profile, which you can
+create with the following script (run as an administrator):
+
+```sql
+CREATE OR REPLACE FUNCTION get_pgstatindex(
+      relname             regclass,
+  OUT index_size          bigint,
+  OUT avg_leaf_density    float8,
+  OUT leaf_fragmentation  float8
+)
+AS $$
+BEGIN
+  SELECT i.index_size, i.avg_leaf_density, i.leaf_fragmentation
+  FROM pgstatindex(relname) i
+  INTO index_size, avg_leaf_density, leaf_fragmentation;
+END;
+$$ LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER;
+```
+
 
 ## Development
 
@@ -32,7 +67,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/mezis/debloater.
+Bug reports and pull requests are welcome on GitHub at https://github.com/deliveroo/debloater.
 
 
 ## License
