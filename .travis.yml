@@ -1,4 +1,5 @@
-sudo: false
+dist: trusty
+sudo: true
 addons:
   postgresql: "9.6"
 language: ruby
@@ -7,5 +8,6 @@ rvm:
 before_install:
   - gem install bundler
 before_script:
+  - psql --version
   - psql -c 'create database debloater_test;' -U postgres
 
