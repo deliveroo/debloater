@@ -56,21 +56,31 @@ module Debloater
 
 
     def debloat!
+      _log "Old index definition:"
+      _log @sql
+
       [
-        "DROP INDEX IF EXISTS idx_debloat_new",
+        'DROP INDEX IF EXISTS idx_debloat_new',
         @sql.
           sub(/CONCURRENTLY/i, '').
-          sub(/CREATE (UNIQUE)? INDEX/i, 'CREATE \1 INDEX CONCURRENTLY').
+          sub(/CREATE\s+(UNIQUE\s+)?INDEX/i, 'CREATE \1INDEX CONCURRENTLY').
           sub(@name, 'idx_debloat_new'),
-        'BEGIN',
-        "ALTER INDEX #{@name} RENAME TO idx_debloat_old",
-        "ALTER INDEX idx_debloat_new RENAME TO #{@name}",
-        'DROP INDEX idx_debloat_old',
-        'COMMIT',
+        %{
+          BEGIN;
+          ALTER INDEX #{@name} RENAME TO idx_debloat_old;
+          ALTER INDEX idx_debloat_new RENAME TO #{@name};
+          DROP INDEX idx_debloat_old;
+          COMMIT;
+        },
       ].each do |sql|
-        _log "\t#{sql}"
         begin
+          _log "\t#{sql}"
           @conn.exec sql
+        rescue PG::TRDeadlockDetected => e
+          _log "Deadlock encountered. Press enter to retry, ^C to abort."
+          IO.console.gets
+          @conn.exec 'ROLLBACK;'
+          retry
         rescue PG::DependentObjectsStillExist => e
           _log "Could not debloat '#{@name}', skipping. Details:"
           _log e.message
