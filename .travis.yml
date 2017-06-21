@@ -1,5 +1,13 @@
 sudo: false
+addons:
+  postgresql: "9.6"
+services:
+  - postgresql
 language: ruby
 rvm:
-  - 2.3.3
-before_install: gem install bundler -v 1.14.6
+  - 2.4.1
+before_install:
+  - gem install bundler
+before_script:
+  - psql -c 'create database debloater_test;' -U postgres
+

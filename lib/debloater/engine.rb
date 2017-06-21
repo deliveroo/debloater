@@ -15,6 +15,7 @@ module Debloater
 
 
     def run
+      debloated_indices = []
       Index.each(@conn) do |index|
         if index.pkey?
           _log "Skipping primary key index '#{index.name}'"
@@ -42,7 +43,9 @@ module Debloater
         end
 
         index.debloat!
+        debloated_indices << index
       end
+      debloated_indices
     end
   end
 end
