@@ -1,28 +1,28 @@
+require 'io/console'
+require 'optionparser'
 require 'debloater/connection'
 require 'debloater/engine'
-require 'io/console'
 
 module Debloater
   class CLI
     DEFAULTS = {
       connection: {
-        host:     'localhost',
-        port:     5432,
-        user:     'postgres',
-        password: nil,
-        dbname:   nil,
+        host:         'localhost',
+        port:         5432,
+        user:         'postgres',
+        password:     nil,
+        dbname:       nil,
       },
       engine: {
-        confirm:    true,
-        min_mb:     50,
-        max_density: 0.75,
+        confirm:      true,
+        min_mb:       50,
+        max_density:  0.75,
       },
       prompt_password: true,
     }
 
     def initialize(argv)
-      @options = DEFAULTS.dup
-      _parse(argv.dup, @options)
+      @options = _parse(argv.dup)
     end
     
     def run
@@ -32,7 +32,8 @@ module Debloater
 
     private
 
-    def _parse(argv, options)
+    def _parse(argv)
+      options = DEFAULTS.dup
       parser = OptionParser.new do |opts|
         opts.banner = "Usage: debloater [options] database"
 
@@ -87,6 +88,8 @@ module Debloater
       if options[:prompt_password]
         options[:connection][:password] = IO.console.getpass('Enter password (no echo):')
       end
+
+      options
     end
   end
 end

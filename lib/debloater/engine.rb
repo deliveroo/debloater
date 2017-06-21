@@ -23,7 +23,7 @@ module Debloater
         end
 
         unless index.valid?
-          _log "Skipping primary key index '#{index.name}'"
+          _log "Skipping invalid (non-Btree) index '#{index.name}'"
           next
         end
 
@@ -34,8 +34,10 @@ module Debloater
           bloat: index.bloat,
         })
 
-        # skip non-bloated indices
-        next if index.bloat < @min_mb || index.density > @max_density
+        if index.bloat < @min_mb || index.density > @max_density
+          _log "Skipping non-bloated index '#{index.name}'"
+          next
+        end
 
         if @confirm
           $stderr.write "debloat this index? [y/N] "

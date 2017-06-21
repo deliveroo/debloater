@@ -22,6 +22,7 @@ module Debloater
       data.sort_by { |d| 
         d['indexname'] 
       }.each { |d| 
+        next if d['indexname'] =~ /idx_debloat/
         yield new(conn, name: d['indexname'], sql: d['indexdef'])
       }
     rescue PG::Error => e
@@ -58,20 +59,23 @@ module Debloater
       [
         "DROP INDEX IF EXISTS idx_debloat_new",
         @sql.
-          sub('CONCURRENTLY', '').
-          sub('CREATE INDEX', 'CREATE INDEX CONCURRENTLY').
-          sub(@name, "idx_debloat_new"),
-        "BEGIN",
+          sub(/CONCURRENTLY/i, '').
+          sub(/CREATE (UNIQUE)? INDEX/i, 'CREATE \1 INDEX CONCURRENTLY').
+          sub(@name, 'idx_debloat_new'),
+        'BEGIN',
         "ALTER INDEX #{@name} RENAME TO idx_debloat_old",
         "ALTER INDEX idx_debloat_new RENAME TO #{@name}",
-        "DROP INDEX idx_debloat_old",
-        "COMMIT",
+        'DROP INDEX idx_debloat_old',
+        'COMMIT',
       ].each do |sql|
         _log "\t#{sql}"
         begin
           @conn.exec sql
+        rescue PG::DependentObjectsStillExist => e
+          _log "Could not debloat '#{@name}', skipping. Details:"
+          _log e.message
         rescue PG::Error => e
-          _fatal e, msg: "Failure during index debloating, you may need to recover manually."
+          _fatal e, msg: "Failure during index debloating, you may want to delete the temporary index 'idx_debloat_new' manually."
         end
       end
     end

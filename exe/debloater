@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'rubygems'
 require 'debloater/cli'
 
 Debloater::CLI.new(ARGV).run
