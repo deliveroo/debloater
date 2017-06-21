@@ -7,9 +7,10 @@ module Debloater
     # conn: connection object
     # method: the function used to obtain index information
     # name: the index name
-    def initialize(conn, name:)
+    def initialize(conn, name:, sql:)
       @conn = conn
       @name = name
+      @sql = sql
     end
 
     attr_reader :name
@@ -21,7 +22,7 @@ module Debloater
       data.sort_by { |d| 
         d['indexname'] 
       }.each { |d| 
-        yield new(conn, name: d['indexname'])
+        yield new(conn, name: d['indexname'], sql: d['indexdef'])
       }
     rescue PG::Error => e
       _fatal e, msg: 'Could not list indexes'
@@ -55,12 +56,14 @@ module Debloater
 
     def debloat!
       [
-        index['indexdef'].
+        "DROP INDEX IF EXISTS idx_debloat_new",
+        @sql.
+          sub('CONCURRENTLY', '').
           sub('CREATE INDEX', 'CREATE INDEX CONCURRENTLY').
-          sub(indexname, "idx_debloat_new"),
+          sub(@name, "idx_debloat_new"),
         "BEGIN",
-        "ALTER INDEX #{indexname} RENAME TO idx_debloat_old",
-        "ALTER INDEX idx_debloat_new RENAME TO #{indexname}",
+        "ALTER INDEX #{@name} RENAME TO idx_debloat_old",
+        "ALTER INDEX idx_debloat_new RENAME TO #{@name}",
         "DROP INDEX idx_debloat_old",
         "COMMIT",
       ].each do |sql|
@@ -93,8 +96,6 @@ module Debloater
       else
         _fatal e, msg: "Could not fetch metadata for index '#{@name}'"
       end
-    rescue PG::Error => e
-      binding.pry
     end
   end
 end

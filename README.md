@@ -5,7 +5,7 @@ Safely rebuilds PostgreSQL indices on a live database.
 
 ## Installation
 
-With a recent versino of Ruby installed, run:
+With a recent version of Ruby installed, run:
 
     gem install debloater
 

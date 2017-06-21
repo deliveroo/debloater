@@ -26,7 +26,6 @@ module Debloater
     end
     
     def run
-      puts @options.inspect
       conn = Connection.new(@options[:connection])
       Engine.new(conn, @options[:engine]).run
     end
