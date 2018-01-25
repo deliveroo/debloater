@@ -1,4 +1,3 @@
-require 'pry'
 require 'debloater/helpers'
 require 'debloater/index'
 

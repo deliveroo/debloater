@@ -24,7 +24,7 @@ module Debloater
     def initialize(argv)
       @options = _parse(argv.dup)
     end
-    
+
     def run
       conn = Connection.new(@options[:connection])
       Engine.new(conn, @options[:engine]).run
@@ -66,7 +66,7 @@ module Debloater
         end
 
         opts.on('--max-density [FRACTION]', 'Do not debloat if the index density is higher than FRACTION [0.75]') do |v|
-          options[:engine][:min_mb] = v.to_f
+          options[:engine][:max_density] = v.to_f
         end
 
         opts.on('--help', 'Prints this help') do
