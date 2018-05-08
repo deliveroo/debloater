@@ -57,6 +57,11 @@ module Debloater
           options[:prompt_password] = false
         end
 
+        opts.on('-P PASS', 'Password to connect with [null]. Overrides password prompting.') do |v|
+          options[:connection][:password] = v
+          options[:prompt_password] = false
+        end
+
         opts.on('--auto', 'Do not ask for confirmation before debloating') do |v|
           options[:engine][:confirm] = false
         end

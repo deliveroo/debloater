@@ -18,7 +18,7 @@ module Debloater
     def_delegators :@pg, :exec, :exec_params
 
     def statindex_method
-      @_guessed_index_method ||= 
+      @_guessed_index_method ||=
         if _check_pgstatindex
           method = :pgstatindex
         elsif _check_get_pgstatindex
